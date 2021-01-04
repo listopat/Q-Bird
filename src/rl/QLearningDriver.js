@@ -1,5 +1,10 @@
 import Action from "./Action";
 import { digitize, randomChoice, range, DefaultMap } from "../utils";
+import MetricComposite from "./metrics/MetricComposite";
+import AttemptCounter from "./metrics/AttemptCounter";
+import MeanStepQMetric from "./metrics/MeanStepQMetric";
+import MeanStepRewardMetric from "./metrics/MeanStepRewardMetric";
+import TimeAliveMetric from "./metrics/TimeAliveMetric";
 
 export default class QLearningDriver {
   constructor(
@@ -12,13 +17,20 @@ export default class QLearningDriver {
       playerAngle: range(-90, 90, 180),
       pipeDistance: range(0, 200, 25),
       pipeHeight: range(0, 400, 50),
-    }
+    },
+    metrics = new MetricComposite(
+      new AttemptCounter(),
+      new MeanStepQMetric(),
+      new MeanStepRewardMetric(),
+      new TimeAliveMetric()
+    )
   ) {
     this.learningRate = learningRate;
     this.discountFactor = discountFactor;
     this.eps = eps;
     this.Q = Q;
     this.bins = bins;
+    this.metrics = metrics;
     this.reset();
   }
 
@@ -31,14 +43,13 @@ export default class QLearningDriver {
   }
 
   reset() {
+    this.metrics.reset();
     this.prevState = "start";
     this.prevAction = Action.JUMP;
+    this.prevQ = 0;
   }
 
   binState(s) {
-    if (s === "dead") {
-      return "dead";
-    }
     return [
       digitize(this.bins.playerPosition, s.player.position),
       digitize(this.bins.playerAngle, s.player.angle),
@@ -55,35 +66,55 @@ export default class QLearningDriver {
     return { Q: maxQ, action: randomChoice(maxActions) };
   }
 
-  updateQ(state) {
+  updateQ(newState) {
     const k = [this.prevState, this.prevAction];
-    const maxFutureReward = state === "dead" ? 0 : this.maxQAction(state).Q;
-    const reward = QLearningDriver.calculateReward(state);
+    const maxFutureReward =
+      newState === "dead" ? 0 : this.maxQAction(newState).Q;
     this.Q.set(
       k,
       this.Q.get([this.prevState, this.prevAction]) +
         this.learningRate *
-          (reward + this.discountFactor * maxFutureReward - this.Q.get(k))
+          (this.prevReward +
+            this.discountFactor * maxFutureReward -
+            this.Q.get(k))
     );
   }
 
-  updateState(newState, isUpdateQ = true) {
+  onStep(newState, isUpdateQ = true) {
     const discreteState = this.binState(newState);
+
+    this.prevReward = QLearningDriver.calculateReward(discreteState);
     if (isUpdateQ) {
       this.updateQ(discreteState);
     }
+
+    this.metrics.onStep({ reward: this.prevReward, Q: this.prevQ });
+
     this.prevState = discreteState;
-    this.prevAction =
-      Math.random() < this.eps
-        ? randomChoice(Action)
-        : this.maxQAction(discreteState).action;
+
+    if (Math.random() < this.eps) {
+      this.prevAction = randomChoice(Action);
+      this.prevQ = this.Q.get([this.prevState, this.prevAction]);
+    } else {
+      const maxQAction = this.maxQAction(discreteState);
+      this.prevAction = maxQAction.action;
+      this.prevQ = maxQAction.Q;
+    }
+
     return this.prevAction;
   }
 
-  die(isUpdateQ = true) {
+  onEnd(isUpdateQ = true) {
+    this.prevReward = QLearningDriver.calculateReward("dead");
     if (isUpdateQ) {
       this.updateQ("dead");
     }
+
+    this.metrics.onStep({ reward: this.prevReward, Q: this.prevQ });
+    const metrics = this.metrics.onEnd();
+
     this.reset();
+
+    return metrics;
   }
 }

@@ -124,6 +124,9 @@ function handleBackend(msg) {
     case "action":
       performAction(msg.action);
       break;
+    case "metrics":
+      console.log(msg.metrics);
+      break;
     default:
       console.error(`Unknown message: ${msg}`);
   }

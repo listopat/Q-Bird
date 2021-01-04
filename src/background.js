@@ -35,13 +35,15 @@ chrome.runtime.onConnect.addListener((port) => {
     portToSeq.set(port, msg.seq);
     switch (msg.type) {
       case "state": {
-        const action = drivers[tabId].updateState(msg.state, isUpdateQ);
+        const action = drivers[tabId].onStep(msg.state, isUpdateQ);
         port.postMessage({ seq: msg.seq, type: "action", action });
         break;
       }
-      case "death":
-        drivers[tabId].die(isUpdateQ);
+      case "death": {
+        const metrics = drivers[tabId].onEnd(isUpdateQ);
+        port.postMessage({ seq: msg.seq, type: "metrics", metrics });
         break;
+      }
       default:
         console.error(`Unknown message ${msg}`);
     }

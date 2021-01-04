@@ -1,17 +1,25 @@
 {
-    "manifest_version": 2,
-    "name": "Q-bird",
-    "version": "0.1",
-    "browser_action": {
-        "default_popup": "popup.html"
-    },
-    "content_scripts": [
-        {
-          "matches": [
-            "https://nebezb.com/floppybird/"
-          ],
-          "run_at": "document_idle",
-          "js": ["main.js"]
-        }
-    ]
+  "manifest_version": 2,
+  "name": "Q-bird",
+  "version": "0.1",
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
+  "background": {
+    "scripts": ["dist/background.js"],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://nebezb.com/floppybird/*"],
+      "run_at": "document_idle",
+      "js": ["dist/content.js"]
+    }
+  ],
+  "commands": {
+    "toggle_agent": {
+      "suggested_key": {
+        "default": "Ctrl+M"
+      },
+      "description": "Toggle agent"
+    }
   }
+}

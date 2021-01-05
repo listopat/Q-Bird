@@ -3,7 +3,6 @@ import { digitize, randomChoice, range, DefaultMap } from "../utils";
 import MetricComposite from "./metrics/MetricComposite";
 import AttemptCounter from "./metrics/AttemptCounter";
 import MeanStepQMetric from "./metrics/MeanStepQMetric";
-import MeanStepRewardMetric from "./metrics/MeanStepRewardMetric";
 import TimeAliveMetric from "./metrics/TimeAliveMetric";
 
 export default class QLearningDriver {
@@ -21,7 +20,6 @@ export default class QLearningDriver {
     metrics = new MetricComposite(
       new AttemptCounter(),
       new MeanStepQMetric(),
-      new MeanStepRewardMetric(),
       new TimeAliveMetric()
     )
   ) {

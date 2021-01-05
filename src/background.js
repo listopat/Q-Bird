@@ -26,7 +26,7 @@ chrome.runtime.onConnect.addListener((port) => {
 
   port.onMessage.addListener((msg) => {
     const expectedSeq = portToSeq.get(port) + 1;
-    const isUpdateQ = msg.seq === expectedSeq;
+    const isUpdateQ = msg.seq === expectedSeq && msg.inconsistent === false;
     if (!isUpdateQ) {
       console.error(
         `Invalid message seq: ${msg.seq}, expected: ${expectedSeq}`

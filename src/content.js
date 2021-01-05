@@ -8,6 +8,7 @@ let backend;
 let seq;
 let prevGameState;
 let currentGameState;
+let isBackendInconsistent = false;
 
 function getGameState() {
   const splashScreen = document.getElementById("splash");
@@ -110,16 +111,20 @@ function performAction(action) {
 }
 
 function sendBackend(msg) {
-  backend.postMessage({ seq, ...msg });
+  const fullMsg = { seq, ...msg };
+  fullMsg.inconsistent = isBackendInconsistent;
+  backend.postMessage(fullMsg);
   seq += 1;
 }
 
 function handleBackend(msg) {
   const expectedSeq = seq - 1;
-  if (msg.seq !== expectedSeq) {
+  isBackendInconsistent = msg.seq !== expectedSeq;
+  if (isBackendInconsistent) {
     console.error(`Invalid message seq: ${msg.seq}, expected: ${expectedSeq}`);
     return;
   }
+
   switch (msg.type) {
     case "action":
       performAction(msg.action);

@@ -22,4 +22,9 @@ export default class AttemptCounter {
   onEnd() {
     return this.attempt;
   }
+
+  deserialize(d) {
+    this.attempt = d.attempt;
+    return this;
+  }
 }

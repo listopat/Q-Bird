@@ -18,4 +18,9 @@ export default class TimeAliveMetric {
   onEnd() {
     return this.timeAlive;
   }
+
+  deserialize(d) {
+    this.timeAlive = d.timeAlive;
+    return this;
+  }
 }

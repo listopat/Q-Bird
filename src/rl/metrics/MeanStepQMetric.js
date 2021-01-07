@@ -20,4 +20,10 @@ export default class MeanStepQMetric {
   onEnd() {
     return this.QSum / this.steps;
   }
+
+  deserialize(d) {
+    this.QSum = d.QSum;
+    this.steps = d.steps;
+    return this;
+  }
 }

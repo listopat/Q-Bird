@@ -22,4 +22,11 @@ export default class MetricComposite {
     });
     return metricValues;
   }
+
+  deserialize(d) {
+    this.metrics.forEach((m, i) => {
+      m.deserialize(d.metrics[i]);
+    });
+    return this;
+  }
 }

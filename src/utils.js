@@ -34,14 +34,13 @@ export function randomChoice(obj) {
 }
 
 /**
- * Map with a default value. A plain map compares by reference, so using arrays
- * as keys is impossible. This map converts keys to strings internally to force
- * comparison by value :(
+ * Map with a default value. Converts keys to strings internally to enable
+ * indexing by complex types and comparison by key value.
  */
 export class DefaultMap {
   constructor(defaultValue = 0) {
     this.defaultValue = defaultValue;
-    this.map = new Map();
+    this.map = {};
   }
 
   static k(o) {
@@ -49,11 +48,32 @@ export class DefaultMap {
   }
 
   get(key) {
-    return this.map.get(DefaultMap.k(key)) || this.defaultValue;
+    const k = DefaultMap.k(key);
+    return k in this.map ? this.map[k] : this.defaultValue;
   }
 
   set(key, value) {
-    this.map.set(DefaultMap.k(key), value);
+    this.map[DefaultMap.k(key)] = value;
     return this;
   }
+
+  deserialize(d) {
+    this.defaultValue = d.defaultValue;
+    this.map = d.map;
+    return this;
+  }
+}
+
+export function stringHash(s) {
+  let hash = 0;
+  let i;
+  let chr;
+  for (i = 0; i < s.length; i += 1) {
+    chr = s.charCodeAt(i);
+    // eslint-disable-next-line no-bitwise
+    hash = (hash << 5) - hash + chr;
+    // eslint-disable-next-line no-bitwise
+    hash |= 0; // Convert to 32bit integer
+  }
+  return JSON.stringify(hash);
 }

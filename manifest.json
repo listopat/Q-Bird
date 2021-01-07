@@ -2,6 +2,7 @@
   "manifest_version": 2,
   "name": "Q-bird",
   "version": "0.1",
+  "permissions": ["alarms", "storage"],
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
   "background": {
     "scripts": ["dist/background.js"],
@@ -20,6 +21,12 @@
         "default": "Ctrl+M"
       },
       "description": "Toggle agent"
+    },
+    "save_state": {
+      "suggested_key": {
+        "default": "Ctrl+Period"
+      },
+      "description": "Save state"
     }
   }
 }

@@ -7,9 +7,10 @@ import {
   DefaultMap,
 } from "../utils";
 import MetricComposite from "./metrics/MetricComposite";
+import RollingMeanMetric from "./metrics/RollingMeanMetric";
 import AttemptCounter from "./metrics/AttemptCounter";
-import MeanStepQMetric from "./metrics/MeanStepQMetric";
 import TimeAliveMetric from "./metrics/TimeAliveMetric";
+import MeanQDeltaSqMetric from "./metrics/MeanQDeltaSqMetric";
 
 export default class QLearningDriver {
   constructor(
@@ -18,15 +19,15 @@ export default class QLearningDriver {
     eps = 0.05,
     Q = new DefaultMap(0),
     bins = {
-      playerPosition: range(0, 400, 25),
-      playerAngle: range(-90, 90, 30),
-      pipeDistance: range(0, 200, 25),
+      playerPosition: range(0, 400, 50),
+      playerAngle: range(-90, 90, 180),
+      pipeDistance: range(0, 200, 200),
       pipeHeight: range(0, 400, 50),
     },
     metrics = new MetricComposite(
       new AttemptCounter(),
-      new MeanStepQMetric(),
-      new TimeAliveMetric()
+      new TimeAliveMetric(),
+      new RollingMeanMetric(new MeanQDeltaSqMetric(), 20)
     )
   ) {
     this.learningRate = learningRate;
@@ -83,24 +84,29 @@ export default class QLearningDriver {
   }
 
   onStep(newState, isUpdateQ = true) {
-    const discreteState = this.binState(newState);
+    const binNewState = this.binState(newState);
 
-    this.reward = QLearningDriver.calculateReward(discreteState);
+    this.reward = QLearningDriver.calculateReward(binNewState);
     if (isUpdateQ) {
-      this.updateQ(discreteState);
+      this.updateQ(binNewState);
     }
 
-    this.metrics.onStep({ reward: this.reward, Q: this.actionQ });
+    this.state = binNewState;
+    const newStateMaxQAction = this.maxQAction(binNewState);
 
-    this.state = discreteState;
+    this.metrics.onStep({
+      discountFactor: this.discountFactor,
+      reward: this.reward,
+      Q: this.actionQ,
+      newStateMaxQ: newStateMaxQAction.Q,
+    });
 
     if (Math.random() < this.eps) {
       this.action = randomChoice(Action);
       this.actionQ = this.Q.get([...this.state, this.action]);
     } else {
-      const maxQAction = this.maxQAction(discreteState);
-      this.action = maxQAction.action;
-      this.actionQ = maxQAction.Q;
+      this.action = newStateMaxQAction.action;
+      this.actionQ = newStateMaxQAction.Q;
     }
 
     return this.action;
@@ -112,7 +118,12 @@ export default class QLearningDriver {
       this.updateQ("dead");
     }
 
-    this.metrics.onStep({ reward: this.reward, Q: this.actionQ });
+    this.metrics.onStep({
+      discountFactor: this.discountFactor,
+      reward: this.reward,
+      Q: this.actionQ,
+      newStateMaxQ: 0,
+    });
     const metrics = this.metrics.onEnd();
 
     this.reset();

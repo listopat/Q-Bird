@@ -3,7 +3,8 @@ export default class TimeAliveMetric {
     this.reset();
   }
 
-  static getKey() {
+  // eslint-disable-next-line class-methods-use-this
+  getName() {
     return "time_alive";
   }
 

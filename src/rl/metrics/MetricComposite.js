@@ -3,7 +3,8 @@ export default class MetricComposite {
     this.metrics = metrics;
   }
 
-  static getKey() {
+  // eslint-disable-next-line class-methods-use-this
+  getName() {
     return "composite";
   }
 
@@ -18,7 +19,7 @@ export default class MetricComposite {
   onEnd() {
     const metricValues = {};
     this.metrics.forEach((m) => {
-      metricValues[m.constructor.getKey()] = m.onEnd();
+      metricValues[m.getName()] = m.onEnd();
     });
     return metricValues;
   }

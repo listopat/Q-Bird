@@ -77,3 +77,14 @@ export function stringHash(s) {
   }
   return JSON.stringify(hash);
 }
+
+export function sum(array) {
+  return array.reduce(
+    (acc, x) => (x == null || Number.isNaN(x) ? acc : acc + x),
+    0
+  );
+}
+
+export function mean(array) {
+  return sum(array) / array.length;
+}

@@ -3,7 +3,8 @@ export default class AttemptCounter {
     this.reset(true);
   }
 
-  static getKey() {
+  // eslint-disable-next-line class-methods-use-this
+  getName() {
     return "attempt";
   }
 
